@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^10.0.0",
+    "encoding": "^0.1.13",
     "moment-timezone": "^0.5.33",
     "netlify-lambda": "^2.0.14",
     "node-sheets": "^1.2.0",
