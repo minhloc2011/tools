@@ -42,7 +42,7 @@ exports.handler = async (event, context) => {
   
         return `${key}: ${value}`;
       }).join('\n');
-      console.log(messages);
+      // console.log(messages);
       telegramBot.sendMessage('REMINDER TODAY EVENT', messages);
       await wait(2);
     }
