@@ -1,0 +1,19 @@
+{
+  "name": "event-notify-tools",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:lambda": "netlify-lambda serve --config ./webpack.functions.js",
+    "build:lambda": "netlify-lambda build notifications/events"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "moment-timezone": "^0.5.33",
+    "node-sheets": "^1.2.0",
+    "node-telegram-bot-api": "^0.54.0"
+  }
+}
