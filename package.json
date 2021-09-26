@@ -17,6 +17,7 @@
     "moment-timezone": "^0.5.33",
     "netlify-lambda": "^2.0.14",
     "node-sheets": "^1.2.0",
-    "node-telegram-bot-api": "^0.54.0"
+    "node-telegram-bot-api": "^0.54.0",
+    "webpack-node-externals": "^3.0.0"
   }
 }
