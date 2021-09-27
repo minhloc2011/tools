@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:lambda": "netlify-lambda serve --config ./config/webpack.functions.js src/functions",
-    "build:lambda": "netlify-lambda build --config ./config/webpack.functions.js src/functions"
+    "start:lambda": "netlify-lambda serve src/functions --config ./config/webpack.functions.js",
+    "build:lambda": "netlify-lambda build src/functions --config ./config/webpack.functions.js"
   },
   "author": "maket2011",
   "license": "ISC",
