@@ -11,6 +11,7 @@
   "author": "maket2011",
   "license": "ISC",
   "dependencies": {
+    "@netlify/plugin-nextjs": "^3.9.0",
     "dotenv": "^10.0.0",
     "encoding": "^0.1.13",
     "headless-chrome-crawler": "^1.8.0",
