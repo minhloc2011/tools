@@ -1,6 +1,6 @@
 const Sheets = require("node-sheets").default;
 const moment = require("moment-timezone");
-const { telegramBot } = require("../utils/telegram_bot");
+const https = require("https")
 const dotenv = require("dotenv").config();
 const wait = require('../utils/wait')
 
@@ -40,11 +40,11 @@ exports.handler = async (event, context) => {
           value = `${vstTime.format('LLL')} (UTC time: ${value})`;
         }
   
-        return `${key}: ${value}`;
+        return `- <b>${key}</b>: ${value}`;
       }).join('\n');
       // console.log(messages);
-      telegramBot.sendMessage('REMINDER TODAY EVENT', messages);
-      await wait(2);
+      await sendTeleGram(messages)
+      await wait(2)
     }
     return {
       statusCode: 200,
@@ -52,6 +52,39 @@ exports.handler = async (event, context) => {
     };
   } catch (err) {
     console.error(err);
-    return {statusCode: 500};
+    return {
+      statusCode: 500
+    };
   } 
+}
+
+const sendTeleGram = async (messages) => {
+  const title = `\uD83D\uDD25<b>REMINDER TODAY EVENT</b>\uD83D\uDD25 at ${moment().tz(process.env.TIMEZONE).format('Y/m/d HH:mm:ss')}`;
+  const telePath = [
+    '/bot',
+    process.env.TELEGRAM_BOT_TOKEN,
+    '/sendMessage?chat_id=',
+    process.env.CHAT_ID,
+    '&parse_mode=html&text=',
+    title + '\n\n' + messages
+  ];
+
+  const options = {
+    hostname: 'api.telegram.org',
+    port: 443,
+    path: encodeURI(telePath.join('')),
+    method: 'GET'
+  }
+
+  return new Promise((resolve, reject) => {
+    let req = https.request(options, (res) => {
+    });
+
+    req.on('error', (err) => {
+      console.error('rest::request', err);
+      reject(err);
+    });
+
+    req.end();
+  });
 }
