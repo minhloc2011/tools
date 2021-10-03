@@ -27,7 +27,10 @@ exports.handler = async (event, context) => {
     });
 
     if (eventNotEnded.length < 1) {
-      return {statusCode: 200};
+      return {
+        statusCode: 200,
+        body: "No events found!"
+      };
     }
 
     const keyWrappers = ['Event', 'Type', 'Website', 'Token', 'End', 'Link'];
@@ -43,23 +46,26 @@ exports.handler = async (event, context) => {
         return `- <b>${key}</b>: ${value}`;
       }).join('\n');
       // console.log(messages);
-      await sendTeleGram(messages)
+      sendTeleGram(messages)
       await wait(2)
     }
+    
+  } catch (err) {
+    console.error('err', err);
     return {
       statusCode: 200,
-      body: 'OK'
+      body: 'Failed'
     };
-  } catch (err) {
-    console.error(err);
-    return {
-      statusCode: 500
-    };
-  } 
+  }
+
+  return {
+    statusCode: 200,
+    body: 'OK'
+  }
 }
 
-const sendTeleGram = async (messages) => {
-  const title = `\uD83D\uDD25<b>REMINDER TODAY EVENT</b>\uD83D\uDD25 at ${moment().tz(process.env.TIMEZONE).format('Y/m/d HH:mm:ss')}`;
+const sendTeleGram = (messages) => {
+  const title = `\uD83D\uDD25<b>REMINDER TODAY EVENT</b>\uD83D\uDD25`;
   const telePath = [
     '/bot',
     process.env.TELEGRAM_BOT_TOKEN,
@@ -76,15 +82,11 @@ const sendTeleGram = async (messages) => {
     method: 'GET'
   }
 
-  return new Promise((resolve, reject) => {
-    let req = https.request(options, (res) => {
-    });
-
-    req.on('error', (err) => {
-      console.error('rest::request', err);
-      reject(err);
-    });
-
-    req.end();
+  const req = https.request(options, res => {
+    statusCode = res.statusCode;
   });
+  req.on('error', error => {
+    statusCode = 500;
+  })
+  req.end()
 }

@@ -13,48 +13,56 @@ exports.handler = async (event, context) => {
   try {
     const gs = new Sheets(process.env.GOOGLE_SHEET_ID);
     await gs.authorizeApiKey(process.env.GOOGLE_SHEET_KEY);
-    // const names = await gs.getSheetsNames();
-    // console.log('gs names', names);
-    // const tables = await gs.tables(names.map((name) => ({ name: name })));
     const table = await gs.tables("5.ZapperQuests!A:D");
     const rows = table.rows;
     const validRows = rows.filter(row => {
       return (row.Wallet['stringValue'] && row.ApiKey['stringValue']);
     });
     if (validRows.length < 1) {
-      return {statusCode: 200};
+      return {
+        statusCode: 200,
+        body: "No wallet found!"
+      };
     }
     const currentTime = moment().tz(process.env.TIMEZONE);
-    for (const row of validRows) {
-      let res = await requestQuests(row.Wallet['stringValue'], row.ApiKey['stringValue'])
-      if (has.call(res, 'statusCode') && res.statusCode !== 200) continue
-
-      let messages = `\uD83D\uDE80 Wallet Address: ${row.Wallet['stringValue']} \n`;
-      messages += '\uD83D\uDE80 Website: https://zapper.fi/quests \n\n';
-      messages += res['data'].map(item => {
-        if (item.id == 9) {
-          return `\u2705 <b>${item.name}</b>: Waiting...`;
-        }
-        const completableAt = moment.utc(item.isCompletableAt).tz(process.env.TIMEZONE);
-        if (currentTime.diff(completableAt) >= 0) {
-          return `\u2705 <b>${item.name}</b> is over time, let's claim now \u23F0`;
-        }
-        const duration = formatRemainTime(completableAt.valueOf() - currentTime.valueOf());
-
-        return `\u2705 <b>${item.name}</b>: ${duration} \u23F0`;
-      }).join('\n');
-      await sendTeleGram(messages)
-      await wait(2);
-    }
+    const allWallets = validRows.map(row => {
+      return row.Wallet['stringValue']
+    })
+    const firstWallet = validRows[0]
     
-    return {
-      statusCode: 200,
-      body: 'OK'
-    };
+    let res = await requestQuests(firstWallet.Wallet['stringValue'], firstWallet.ApiKey['stringValue'])
+    if (has.call(res, 'statusCode') && res.statusCode !== 200) {
+      return {
+        statusCode: 200,
+        body: "Request failed"
+      }
+    }
+
+    let messages = `\uD83D\uDE80 Wallet Address: \n`
+    messages += allWallets.join('\n') + '\n\n'
+    messages += res['data'].map(item => {
+      if (item.id == 9) {
+        return `\u2705 <b>${item.name}</b>: Waiting...`
+      }
+      const completableAt = moment.utc(item.isCompletableAt).tz(process.env.TIMEZONE)
+      if (currentTime.diff(completableAt) >= 0) {
+        return `\u2705 <b>${item.name}</b> is over time, let's claim now \u23F0`
+      }
+      const duration = formatRemainTime(completableAt.valueOf() - currentTime.valueOf())
+
+      return `\u2705 <b>${item.name}</b> remaining: ${duration} \u23F0`
+    }).join('\n')
+
+    sendTeleGram(messages);
   } catch (err) {
     console.error(err);
     return {statusCode: 500};
-  } 
+  }
+
+  return {
+    statusCode: 200,
+    body: 'OK'
+  };
 }
 
 const formatRemainTime = (timestamp) => {
@@ -125,7 +133,7 @@ const requestQuests = async (walletAddress, apiKey) => {
   });
 }
 
-const sendTeleGram = async (messages) => {
+const sendTeleGram = (messages) => {
   const title = `\u231B<b>Zapper Quests</b>\u231B at ${moment().tz(process.env.TIMEZONE).format('Y/m/d HH:mm:ss')}`;
   const telePath = [
     '/bot',
@@ -143,15 +151,11 @@ const sendTeleGram = async (messages) => {
     method: 'GET'
   }
 
-  return new Promise((resolve, reject) => {
-    let req = https.request(options, (res) => {
-    });
-
-    req.on('error', (err) => {
-      console.error('rest::request', err);
-      reject(err);
-    });
-
-    req.end();
+  const req = https.request(options, res => {
+    statusCode = res.statusCode;
   });
+  req.on('error', error => {
+    statusCode = 500;
+  })
+  req.end()
 }
